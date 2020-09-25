@@ -1,0 +1,4 @@
+ray[serve]
+scikit-learn
+faiss-cpu
+numpy
