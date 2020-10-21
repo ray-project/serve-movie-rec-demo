@@ -1,3 +1,5 @@
+A simple demo of how to use Ray Serve to build a recommendation API.
+
 First, download the database file that contains movie information:
 
 ```wget https://ray-serve-blog.s3-us-west-2.amazonaws.com/composition-demo.sqlite3```
