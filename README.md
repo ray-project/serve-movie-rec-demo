@@ -1,4 +1,4 @@
-A simple demo of how to use Ray Serve to build a recommendation API.
+# Building a Recommendation API with Ray Serve
 
 First, download the database file that contains movie information:
 
