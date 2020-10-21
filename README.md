@@ -17,5 +17,16 @@ Now you should be ready to run.
 
 # Deploy a simple "model" that returns random results.
 > python deploy_random.py
-> curl -X GET http://localhost:8000/rec/random
+> curl http://localhost:8000/rec/random
+
+# Deploy a more advanced NLP-based model that returns results based on plot similarity.
+> python deploy_plot.py
+> curl "http://localhost:8000/rec/plot?liked_id=322259"
+
+# Deploy an ensemble model that dynamically selects between the two existing models.
+> python deploy_ensemble.py
+> curl "http://localhost:8000/rec/ensemble?liked_id=322259"
+
+# Clean up.
+> ray stop
 ```
