@@ -17,9 +17,7 @@ def get_db_connection():
     if not os.path.exists(path):
         raise Exception("""
 It seems like the database file doesn't exist. Did you forget
-to download it? You can try running
-    make download-data
-or
+to download it?
     wget https://ray-serve-blog.s3-us-west-2.amazonaws.com/composition-demo.sqlite3
     """)
 
@@ -105,7 +103,7 @@ class ImpressionStore:
 def choose_ensemble_results(model_distribution, model_results):
     # Normalize dist
     if len(model_distribution) != 2:
-        default_dist = {model: 1 for model in ["color", "plot"]}
+        default_dist = {model: 1 for model in ["random", "plot"]}
         for name, count in model_distribution.items():
             default_dist[name] += count
     else:
@@ -131,7 +129,7 @@ def choose_ensemble_results(model_distribution, model_results):
 
     # Rank based on weights
     groups = cycle(sorted_group)
-    while len(chosen) <= 10:
+    while len(chosen) <= 6:
         model = next(groups)
         preds = model_results[model]
 
@@ -141,11 +139,12 @@ def choose_ensemble_results(model_distribution, model_results):
             else:
                 continue
 
-        movie_id = preds.pop(0)
+        movie = preds.pop(0)
+        movie["model"] = model
 
-        if movie_id not in chosen:
-            impressions[model].append(movie_id)
-            chosen.append(movie_id)
+        if movie not in chosen:
+            impressions[model].append(movie)
+            chosen.append(movie)
 
     return normalized_distribution, impressions, chosen
 
@@ -162,7 +161,7 @@ class LRMovieRanker:
         return [recommended_movies[i] for i in high_to_low_idx]
 
 
-class KNearstNeighborIndex:
+class KNearestNeighborIndex:
     def __init__(self, db_cursor):
         # Query all the cover image palette
         self.id_to_arr = {
@@ -180,12 +179,18 @@ class KNearstNeighborIndex:
 
     def search(self, request):
         liked_id = request.args["liked_id"]
-        num_returns = int(request.args.get("count", 6))
+        num_returns = int(request.args.get("count", 5))
 
         # Perform nearest neighbor search
         source_color = self.id_to_arr[liked_id]
         source_color = np.expand_dims(source_color, 0).astype('float32')
-        _, ids = self.index.search(source_color, num_returns)
+        _, ids = self.index.search(source_color, num_returns+1)
         neighbors = ids.flatten().tolist()
 
-        return [str(n) for n in neighbors]
+        ret = []
+        for n in neighbors:
+            if str(n) != liked_id:
+                ret.append(str(n))
+            if len(ret) == num_returns:
+                break
+        return ret
