@@ -5,13 +5,15 @@ from ray import serve
 
 
 class PlotRecommender:
-    def __init__(self, lr_model):
+    def __init__(self):
         self.db = get_db_connection()
 
         bert_vectors = self.db.execute(
             "SELECT id, plot_vector_json FROM movies")
         self.index = KNearestNeighborIndex(bert_vectors)
 
+        lr_model = pickle.loads(self.db.execute(
+            "SELECT weights FROM models WHERE key='ranking/lr:base'").fetchone()[0])
         self.lr_model = LRMovieRanker(lr_model, features=self.index.id_to_arr)
 
     def __call__(self, request):
@@ -40,10 +42,7 @@ if __name__ == "__main__":
     except:
         raise Exception("Failed to connect to Ray Serve. Did you forget to run setup.py first?")
 
-    model_weights = get_db_connection().execute(
-        "SELECT weights FROM models WHERE key='ranking/lr:base'").fetchone()[0]
-    base_lr_model = pickle.loads(model_weights)
-    client.create_backend("plot:v0", PlotRecommender, base_lr_model)
+    client.create_backend("plot:v0", PlotRecommender)
     client.create_endpoint("plot", backend="plot:v0", route="/rec/plot")
     print("Deployed plot recommender to /rec/plot.")
     print("Try it out with: 'curl \"http://localhost:8000/rec/plot?liked_id=322259\"'")
