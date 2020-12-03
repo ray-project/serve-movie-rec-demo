@@ -9,7 +9,7 @@ import pandas as pd
 import faiss
 
 import ray
-from ray.experimental.metrics import Gauge
+from ray.util.metrics import Gauge
 
 
 def get_db_connection():
